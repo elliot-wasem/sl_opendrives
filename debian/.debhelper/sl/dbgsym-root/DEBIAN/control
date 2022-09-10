@@ -10,4 +10,4 @@ Depends: sl (= 6.0-1)
 Section: debug
 Priority: optional
 Description: debug symbols for sl
-Build-Ids: 09db17e660a99c163e94d3795884d3519b6c1f10
+Build-Ids: 17399d422ed51ca8f33a804671cc0e4675a2e327

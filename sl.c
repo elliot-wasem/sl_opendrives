@@ -6,6 +6,8 @@
  *        Last Modified: 2014/06/03
  *========================================
  */
+/* sl version 6.00 : Added functionality for skills test for OpenSystems     */
+/*                                              by Elliot Wasem   2022/09/10 */
 /* sl version 5.03 : Fix some more compiler warnings.                        */
 /*                                              by Ryan Jacobs    2015/01/19 */
 /* sl version 5.02 : Fix compiler warnings.                                  */
@@ -53,10 +55,11 @@ int add_D51(int x);
 int add_sl(int x);
 int add_horses(int x);
 int add_biplane(int x);
-void option(int argc, char *argv[]);     
-int isnumber(char *n);
+int option(int argc, char *argv[]);     
+int is_number_in_range(char *n);
 int my_mvaddstr(int y, int x, char *str);
 
+// global configuration
 config conf = {.accident = 0, .selection = ERR, .logo = 0, .fly = 0, .c51 = 0};
 
 /**
@@ -86,35 +89,52 @@ int my_mvaddstr(int y, int x, char *str)
  * 
  * @returns OK(0) if the string is a number, and ERR(-1) otherwise.
  */
-int isnumber(char *n) {
-    for (int i = 0; n[i] != '\0'; i++) {
-        if (!isdigit(n[i])) {
-            return ERR;
-        }
+int is_number_in_range(char *n) {
+    if (n[0] == '\0') {
+        return ERR;
+    }
+    if (n[1] != '\0') {
+        return ERR;
+    }
+    if (!isdigit(n[0])) {
+        return ERR;
     }
     return OK;
 }
 
+#define OPTERROR_UNKNOWN 1
+#define OPTERROR_INVALID_NUMBER 2
+
 /**
  * Collects options from argv idiomatically using getopt
  */
-void option(int argc, char *argv[])
+int option(int argc, char *argv[])
 {
     extern config conf;
     int opt;
+    // collect options/flags/parameters
     while ((opt = getopt(argc, argv, "aFlcn:")) != -1) {
         switch (opt) {
             case 'a': conf.accident = 1; break;
-            case 'F': conf.fly       = 1; break;
-            case 'l': conf.logo      = 1; break;
-            case 'c': conf.c51       = 1; break;
+            case 'F': conf.fly      = 1; break;
+            case 'l': conf.logo     = 1; break;
+            case 'c': conf.c51      = 1; break;
             case 'n': 
-                if (isnumber(optarg) == OK) {
+                if (is_number_in_range(optarg) == OK) {
                     conf.selection = atoi(optarg);
+                } else {
+                    return OPTERROR_INVALID_NUMBER;
                 }
+                if (conf.selection > 4) {
+                    return OPTERROR_INVALID_NUMBER;
+                }
+                break;
+            default:
+                return OPTERROR_UNKNOWN;
                 break;
         }
     }
+    return OK;
 }
 
 int main(int argc, char *argv[])
@@ -122,7 +142,13 @@ int main(int argc, char *argv[])
     extern config conf;
     int x;
 
-    option(argc, argv);
+    switch (option(argc, argv)) {
+        case OPTERROR_UNKNOWN:
+            return ERR;
+        case OPTERROR_INVALID_NUMBER:
+            fprintf(stderr, "ERROR: Invalid selection. Must be a number 0-4!\n");
+            return ERR;
+    }
 
     initscr();
     signal(SIGINT, SIG_IGN);
@@ -137,8 +163,10 @@ int main(int argc, char *argv[])
     // disables scrolling even if the cursor goes off the bottom of the screen
     scrollok(stdscr, FALSE);
 
-    int print_selection_error = 0;
+    // whether or not there was an out-of-bounds train selection
+    int is_print_selection_error = 0;
 
+    // if no selection was made, generate a random one
     if (conf.selection == ERR) {
         srand(time(NULL));
         conf.selection = rand() % 5;
@@ -171,7 +199,7 @@ int main(int argc, char *argv[])
                     if (add_biplane(x) == ERR) error_occurred = 1;
                     break;
                 default:
-                    print_selection_error = 1;
+                    is_print_selection_error = 1;
                     error_occurred = 1;
                     break;
             }
@@ -185,7 +213,7 @@ int main(int argc, char *argv[])
     mvcur(0, COLS - 1, LINES - 1, 0);
     endwin();
 
-    if (print_selection_error) {
+    if (is_print_selection_error) {
         fprintf(stderr, "ERROR: Locomotive selection '%d' is invalid\n", conf.selection);
     }
 
@@ -396,6 +424,14 @@ void add_smoke(int y, int x)
     }
 }
 
+/**
+ * Draws horses, centering it vertically
+ *
+ * @param x - horizontal position of horses
+ * 
+ * @return ERR(-1) if parameter x is less than -HORSESLENGTH,
+ *             and otherwise OK(0)
+ */
 int add_horses(int x)
 {
     extern config conf;
@@ -424,26 +460,39 @@ int add_horses(int x)
         my_mvaddstr(y + i + dy,      x + 18, horses[(HORSESLENGTH + x + 1) % HORSESPATTERNS][i]);
         my_mvaddstr(y + i + dy + dy, x + 36, horses[(HORSESLENGTH + x + 2) % HORSESPATTERNS][i]);
     }
-    // if accident, print guys
+    if (conf.fly) {
+        my_mvaddstr(y, x+4,  "         ");
+        my_mvaddstr(y, x+21, "         ");
+        my_mvaddstr(y, x+39, "         ");
+    }
+    // if accident, neighs
     if (conf.accident == 1) {
-        if (rand() % 4 == 0)
+        if (x % 20 < 10)
             my_mvaddstr(y-1, x+3,  "NEIGH!  ");
         else
             my_mvaddstr(y-1, x+3,  "        ");
 
-        if (rand() % 4 == 0)
-            my_mvaddstr(y-1, x+20, "NEIGH!  ");
+        if ((x+5) % 20 < 10)
+            my_mvaddstr(y-1+dy, x+20, "NEIGH!  ");
         else
-            my_mvaddstr(y-1, x+20, "        ");
+            my_mvaddstr(y-1+dy, x+20, "        ");
 
-        if (rand() % 4 == 0)
-            my_mvaddstr(y-1, x+38, "NEIGH!  ");
+        if ((x+10) % 20 < 10)
+            my_mvaddstr(y-1+dy+dy, x+38, "NEIGH!  ");
         else
-            my_mvaddstr(y-1, x+38, "        ");
+            my_mvaddstr(y-1+dy+dy, x+38, "        ");
     }
     return OK;
 }
 
+/**
+ * Draws biplane, centering it vertically
+ *
+ * @param x - horizontal position of plane
+ * 
+ * @return ERR(-1) if parameter x is less than -BIPLANELENGTH,
+ *             and otherwise OK(0)
+ */
 int add_biplane(int x)
 {
     extern config conf;
@@ -468,7 +517,10 @@ int add_biplane(int x)
     for (i = 0; i < BIPLANEHEIGHT; ++i) {
         my_mvaddstr(y + i,           x,      biplane[(BIPLANELENGTH + x)     % BIPLANEPATTERNS][i]);
     }
-    // if accident, print guys
+    if (conf.fly) {
+        my_mvaddstr(y+9, x+1, "             ");
+    }
+    // if accident, smoke and mayday, else ticka tacka
     if (conf.accident == 1) {
         if (x % 20 < 10)
             my_mvaddstr(y+8, x,  "MAYDAY        ");
