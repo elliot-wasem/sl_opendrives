@@ -41,6 +41,8 @@
 #include <curses.h>
 #include <signal.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include "sl.h"
 
 void add_smoke(int y, int x);
@@ -48,15 +50,13 @@ void add_man(int y, int x);
 int add_C51(int x);
 int add_D51(int x);
 int add_sl(int x);
-void option(char *str);
+void option(int argc, char *argv[]);
+int isnumber(char *n);
 int my_mvaddstr(int y, int x, char *str);
 
-int ACCIDENT  = 0;
-int LOGO      = 0;
-int FLY       = 0;
-int C51       = 0;
+config conf = {.accident = 0, .selection = -1, .logo = 0, .fly = 0, .c51 = 0};
 
-/*
+/**
  * Adds a string safely to the screen buffer.
  *
  * @param y, x - y and x coordinates on screen
@@ -76,35 +76,61 @@ int my_mvaddstr(int y, int x, char *str)
     return OK;
 }
 
-void option(char *str)
-{
-    extern int ACCIDENT, LOGO, FLY, C51;
-
-    while (*str != '\0') {
-        switch (*str++) {
-            // accident, print 'helps'
-            case 'a': ACCIDENT = 1; break;
-            // locomotive flies
-            case 'F': FLY      = 1; break;
-            // little train!
-            case 'l': LOGO     = 1; break;
-            // select C51 train
-            case 'c': C51      = 1; break;
-            default:                break;
+/**
+ * Returns OK(0) if string represents a number, and ERR(-1) otherwise.
+ * 
+ * @param n - string to check
+ * 
+ * @returns OK(0) if the string is a number, and ERR(-1) otherwise.
+ */
+int isnumber(char *n) {
+    for (int i = 0; n[i] != '\0'; i++) {
+        if (!isdigit(n[i])) {
+            return ERR;
         }
     }
+    return OK;
+}
+
+void option(int argc, char *argv[])
+{
+    extern config conf;
+    int opt;
+    while ((opt = getopt(argc, argv, "aFlcn:")) != -1) {
+        switch (opt) {
+            case 'a': conf.accident = 1; break;
+            case 'F': conf.fly       = 1; break;
+            case 'l': conf.logo      = 1; break;
+            case 'c': conf.c51       = 1; break;
+            case 'n': 
+                if (isnumber(optarg)) {
+                    conf.selection = atoi(optarg);
+                }
+                break;
+        }
+    }
+    //while (*str != '\0') {
+    //    switch (*str++) {
+    //        // accident, print 'helps'
+    //        case 'a': ACCIDENT = 1; break;
+    //        // locomotive flies
+    //        case 'F': FLY      = 1; break;
+    //        // little train!
+    //        case 'l': LOGO     = 1; break;
+    //        // select C51 train
+    //        case 'c': C51      = 1; break;
+    //        default:                break;
+    //    }
+    //}
 }
 
 int main(int argc, char *argv[])
 {
-    int x, i;
+    extern config conf;
+    int x;
 
-    // TODO: optional - convert to getopt?
-    for (i = 1; i < argc; ++i) {
-        if (*argv[i] == '-') {
-            option(argv[i] + 1);
-        }
-    }
+    option(argc, argv);
+
     initscr();
     // TODO: uncomment line below
     // signal(SIGINT, SIG_IGN);
@@ -123,10 +149,10 @@ int main(int argc, char *argv[])
 
     // draws selected train across screen
     for (x = COLS - 1; ; --x) {
-        if (LOGO == 1) {
+        if (conf.logo == 1) {
             if (add_sl(x) == ERR) break;
         }
-        else if (C51 == 1) {
+        else if (conf.c51 == 1) {
             if (add_C51(x) == ERR) break;
         }
         else {
@@ -142,7 +168,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/*
+/**
  * Draws little train, centering it vertically
  *
  * @param x - horizontal position of train
@@ -152,6 +178,7 @@ int main(int argc, char *argv[])
  */
 int add_sl(int x)
 {
+    extern config conf;
     // 6 stages of the train
     static char *sl[LOGOPATTERNS][LOGOHEIGHT + 1]
         = {{LOGO1, LOGO2, LOGO3, LOGO4, LWHL11, LWHL12, DELLN},
@@ -175,7 +202,7 @@ int add_sl(int x)
     // calculates vertical positioning
     y = LINES / 2 - 3;
 
-    if (FLY == 1) {
+    if (conf.fly == 1) {
         y = (x / 6) + LINES - (COLS / 6) - LOGOHEIGHT;
         py1 = 2;  py2 = 4;  py3 = 6;
     }
@@ -193,7 +220,7 @@ int add_sl(int x)
     }
 
     // if accident flag has been set, add people
-    if (ACCIDENT == 1) {
+    if (conf.accident == 1) {
         add_man(y + 1, x + 14);
         add_man(y + 1 + py2, x + 45);  add_man(y + 1 + py2, x + 53);
         add_man(y + 1 + py3, x + 66);  add_man(y + 1 + py3, x + 74);
@@ -205,6 +232,7 @@ int add_sl(int x)
 
 int add_D51(int x)
 {
+    extern config conf;
     // 6 stages of the train, 10 lines high
     static char *d51[D51PATTERNS][D51HEIGHT + 1]
         = {{D51STR1, D51STR2, D51STR3, D51STR4, D51STR5, D51STR6, D51STR7,
@@ -230,7 +258,7 @@ int add_D51(int x)
     // calculates vertical positioning
     y = LINES / 2 - 5;
 
-    if (FLY == 1) {
+    if (conf.fly == 1) {
         y = (x / 7) + LINES - (COLS / 7) - D51HEIGHT;
         dy = 1;
     }
@@ -240,7 +268,7 @@ int add_D51(int x)
         my_mvaddstr(y + i + dy, x + 53, coal[i]);
     }
     // if accident, print guys
-    if (ACCIDENT == 1) {
+    if (conf.accident == 1) {
         add_man(y + 2, x + 43);
         add_man(y + 2, x + 47);
     }
@@ -250,6 +278,7 @@ int add_D51(int x)
 
 int add_C51(int x)
 {
+    extern config conf;
     static char *c51[C51PATTERNS][C51HEIGHT + 1]
         = {{C51STR1, C51STR2, C51STR3, C51STR4, C51STR5, C51STR6, C51STR7,
             C51WH11, C51WH12, C51WH13, C51WH14, C51DEL},
@@ -272,7 +301,7 @@ int add_C51(int x)
     if (x < - C51LENGTH)  return ERR;
     y = LINES / 2 - 5;
 
-    if (FLY == 1) {
+    if (conf.fly == 1) {
         y = (x / 7) + LINES - (COLS / 7) - C51HEIGHT;
         dy = 1;
     }
@@ -280,7 +309,7 @@ int add_C51(int x)
         my_mvaddstr(y + i, x, c51[(C51LENGTH + x) % C51PATTERNS][i]);
         my_mvaddstr(y + i + dy, x + 55, coal[i]);
     }
-    if (ACCIDENT == 1) {
+    if (conf.accident == 1) {
         add_man(y + 3, x + 45);
         add_man(y + 3, x + 49);
     }

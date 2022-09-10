@@ -148,3 +148,11 @@
 #define C51WH12 "------'|oOo|=[]=-      ||      ||      |  ||=======_|__"
 #define C51WH13 "/~\\____|___|/~\\_|  O=======O=======O   |__|+-/~\\_|     "
 #define C51WH14 "\\_/         \\_/  \\____/  \\____/  \\____/      \\_/       "
+
+typedef struct {
+    int accident;
+    int selection;
+    int logo;
+    int fly;
+    int c51;
+} config;
