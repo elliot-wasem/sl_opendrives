@@ -415,7 +415,7 @@ int add_horses(int x)
         y = (x / 7) + LINES - (COLS / 7) - HORSESHEIGHT;
         dy = 2;
     }
-    // print locomotive and coal car 1 line at a time
+    // print horses, 1 line at a time
     for (i = 0; i < HORSESHEIGHT; ++i) {
         my_mvaddstr(y + i,           x,      horses[(HORSESLENGTH + x)     % HORSESPATTERNS][i]);
         my_mvaddstr(y + i + dy,      x + 18, horses[(HORSESLENGTH + x + 1) % HORSESPATTERNS][i]);
@@ -423,8 +423,20 @@ int add_horses(int x)
     }
     // if accident, print guys
     if (conf.accident == 1) {
-        //add_man(y + 2, x + 43);
-        //add_man(y + 2, x + 47);
+        if (rand() % 4 == 0)
+            my_mvaddstr(y-1, x+3,  "NEIGH!  ");
+        else
+            my_mvaddstr(y-1, x+3,  "        ");
+
+        if (rand() % 4 == 0)
+            my_mvaddstr(y-1, x+20, "NEIGH!  ");
+        else
+            my_mvaddstr(y-1, x+20, "        ");
+
+        if (rand() % 4 == 0)
+            my_mvaddstr(y-1, x+38, "NEIGH!  ");
+        else
+            my_mvaddstr(y-1, x+38, "        ");
     }
     return OK;
 }
