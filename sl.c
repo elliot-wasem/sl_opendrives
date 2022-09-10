@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <time.h>
 #include "sl.h"
 
 void add_smoke(int y, int x);
@@ -130,8 +131,6 @@ int main(int argc, char *argv[])
     noecho();
     // cursor invisible
     curs_set(0);
-    // getch non-blocking
-    nodelay(stdscr, TRUE);
     // leaves the cursor wherever it last was,
     // reduces time spent moving cursor around
     leaveok(stdscr, TRUE);
@@ -139,6 +138,11 @@ int main(int argc, char *argv[])
     scrollok(stdscr, FALSE);
 
     int print_selection_error = 0;
+
+    if (conf.selection == ERR) {
+        srand(time(NULL));
+        conf.selection = rand() % 4;
+    }
 
     // draws selected train across screen
     for (x = COLS - 1; ; --x) {
@@ -148,7 +152,7 @@ int main(int argc, char *argv[])
         else if (conf.c51 == 1) {
             if (add_C51(x) == ERR) break;
         }
-        else if (conf.selection != ERR) {
+        else {
             int error_occurred = 0;
             switch (conf.selection) {
                 case 0:
@@ -172,10 +176,6 @@ int main(int argc, char *argv[])
                 break;
             }
         }
-        else {
-            if (add_D51(x) == ERR) break;
-        }
-        getch();
         refresh();
         usleep(40000);
     }
