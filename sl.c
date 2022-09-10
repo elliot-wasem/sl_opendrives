@@ -56,10 +56,21 @@ int LOGO      = 0;
 int FLY       = 0;
 int C51       = 0;
 
+/*
+ * Adds a string safely to the screen buffer.
+ *
+ * @param y, x - y and x coordinates on screen
+ * @param str - string to print to screen buffer
+ * 
+ * @returns OK(0) if all went well, or ERR(-1) if an error occurred
+ */
 int my_mvaddstr(int y, int x, char *str)
 {
+    // Iterates across string, effectively truncating anything before index 0.
+    // This allows the caller to print things that hang off the left of the screen.
     for ( ; x < 0; ++x, ++str)
         if (*str == '\0')  return ERR;
+    // prints the string to buffer
     for ( ; *str != '\0'; ++str, ++x)
         if (mvaddch(y, x, *str) == ERR)  return ERR;
     return OK;
@@ -71,9 +82,13 @@ void option(char *str)
 
     while (*str != '\0') {
         switch (*str++) {
+            // accident, print 'helps'
             case 'a': ACCIDENT = 1; break;
+            // locomotive flies
             case 'F': FLY      = 1; break;
+            // little train!
             case 'l': LOGO     = 1; break;
+            // select C51 train
             case 'c': C51      = 1; break;
             default:                break;
         }
@@ -84,19 +99,29 @@ int main(int argc, char *argv[])
 {
     int x, i;
 
+    // TODO: optional - convert to getopt?
     for (i = 1; i < argc; ++i) {
         if (*argv[i] == '-') {
             option(argv[i] + 1);
         }
     }
     initscr();
-    signal(SIGINT, SIG_IGN);
+    // TODO: uncomment line below
+    // signal(SIGINT, SIG_IGN);
+
+    // don't echo typed characters to screen
     noecho();
+    // cursor invisible
     curs_set(0);
+    // getch non-blocking
     nodelay(stdscr, TRUE);
+    // leaves the cursor wherever it last was,
+    // reduces time spent moving cursor around
     leaveok(stdscr, TRUE);
+    // disables scrolling even if the cursor goes off the bottom of the screen
     scrollok(stdscr, FALSE);
 
+    // draws selected train across screen
     for (x = COLS - 1; ; --x) {
         if (LOGO == 1) {
             if (add_sl(x) == ERR) break;
@@ -117,9 +142,17 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-
+/*
+ * Draws little train, centering it vertically
+ *
+ * @param x - horizontal position of train
+ * 
+ * @return ERR(-1) if parameter x is less than -LOGOLENGTH,
+ *             and otherwise OK(0)
+ */
 int add_sl(int x)
 {
+    // 6 stages of the train
     static char *sl[LOGOPATTERNS][LOGOHEIGHT + 1]
         = {{LOGO1, LOGO2, LOGO3, LOGO4, LWHL11, LWHL12, DELLN},
            {LOGO1, LOGO2, LOGO3, LOGO4, LWHL21, LWHL22, DELLN},
@@ -134,21 +167,32 @@ int add_sl(int x)
     static char *car[LOGOHEIGHT + 1]
         = {LCAR1, LCAR2, LCAR3, LCAR4, LCAR5, LCAR6, DELLN};
 
+    // py1, py2, py3 positions of coal car and 2 passenger cars
     int i, y, py1 = 0, py2 = 0, py3 = 0;
 
     if (x < - LOGOLENGTH)  return ERR;
+    
+    // calculates vertical positioning
     y = LINES / 2 - 3;
 
     if (FLY == 1) {
         y = (x / 6) + LINES - (COLS / 6) - LOGOHEIGHT;
         py1 = 2;  py2 = 4;  py3 = 6;
     }
+    
+    // iterate over each line of the train and draw it
     for (i = 0; i <= LOGOHEIGHT; ++i) {
+        // draws locomotive
         my_mvaddstr(y + i, x, sl[(LOGOLENGTH + x) / 3 % LOGOPATTERNS][i]);
+        // draws coal car
         my_mvaddstr(y + i + py1, x + 21, coal[i]);
+        // draws passenger car 1
         my_mvaddstr(y + i + py2, x + 42, car[i]);
+        // draws passenger car 2
         my_mvaddstr(y + i + py3, x + 63, car[i]);
     }
+
+    // if accident flag has been set, add people
     if (ACCIDENT == 1) {
         add_man(y + 1, x + 14);
         add_man(y + 1 + py2, x + 45);  add_man(y + 1 + py2, x + 53);
@@ -161,6 +205,7 @@ int add_sl(int x)
 
 int add_D51(int x)
 {
+    // 6 stages of the train, 10 lines high
     static char *d51[D51PATTERNS][D51HEIGHT + 1]
         = {{D51STR1, D51STR2, D51STR3, D51STR4, D51STR5, D51STR6, D51STR7,
             D51WHL11, D51WHL12, D51WHL13, D51DEL},
@@ -181,16 +226,20 @@ int add_D51(int x)
     int y, i, dy = 0;
 
     if (x < - D51LENGTH)  return ERR;
+
+    // calculates vertical positioning
     y = LINES / 2 - 5;
 
     if (FLY == 1) {
         y = (x / 7) + LINES - (COLS / 7) - D51HEIGHT;
         dy = 1;
     }
+    // print locomotive and coal car 1 line at a time
     for (i = 0; i <= D51HEIGHT; ++i) {
         my_mvaddstr(y + i, x, d51[(D51LENGTH + x) % D51PATTERNS][i]);
         my_mvaddstr(y + i + dy, x + 53, coal[i]);
     }
+    // if accident, print guys
     if (ACCIDENT == 1) {
         add_man(y + 2, x + 43);
         add_man(y + 2, x + 47);
