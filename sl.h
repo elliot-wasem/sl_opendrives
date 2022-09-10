@@ -180,6 +180,30 @@
 #define HORSES37 "                   "
 #define HORSES38 "                   "
 
+#define BIPLANEHEIGHT 9
+#define BIPLANELENGTH 33 
+#define BIPLANEPATTERNS 2
+
+#define BIPLANE11 "            ____                 "
+#define BIPLANE12 "  |        | ___\\          /~~~| "
+#define BIPLANE13 " _:_______|/'(..)`\\_______/  | | "
+#define BIPLANE14 "<_|``````  \\__~~__/       ___|_| "
+#define BIPLANE15 "  :\\_____(=========,   ,--\\__|_/ "
+#define BIPLANE16 "  |       \\       /---'          "
+#define BIPLANE17 "            |     /              "
+#define BIPLANE18 "            |____/               "
+#define BIPLANE19 "                                 "
+
+#define BIPLANE21 "            ____                 "
+#define BIPLANE22 "           | ___\\          /~~~| "
+#define BIPLANE23 " _ _______|/'(..)`\\_______/  | | "
+#define BIPLANE24 "<_|``````  \\__~~__/       ___|_| "
+#define BIPLANE25 "   \\_____(=========,   ,--\\__|_/ "
+#define BIPLANE26 "          \\       /---'          "
+#define BIPLANE27 "            |     /              "
+#define BIPLANE28 "            |____/               "
+#define BIPLANE29 "                                 "
+
 typedef struct {
     int accident;
     int selection;

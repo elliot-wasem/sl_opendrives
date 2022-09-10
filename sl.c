@@ -52,7 +52,8 @@ int add_C51(int x);
 int add_D51(int x);
 int add_sl(int x);
 int add_horses(int x);
-void option(int argc, char *argv[]);
+int add_biplane(int x);
+void option(int argc, char *argv[]);     
 int isnumber(char *n);
 int my_mvaddstr(int y, int x, char *str);
 
@@ -140,7 +141,7 @@ int main(int argc, char *argv[])
 
     if (conf.selection == ERR) {
         srand(time(NULL));
-        conf.selection = rand() % 4;
+        conf.selection = rand() % 5;
     }
 
     // draws selected train across screen
@@ -165,6 +166,9 @@ int main(int argc, char *argv[])
                     break;
                 case 3:
                     if (add_horses(x) == ERR) error_occurred = 1;
+                    break;
+                case 4:
+                    if (add_biplane(x) == ERR) error_occurred = 1;
                     break;
                 default:
                     print_selection_error = 1;
@@ -436,6 +440,46 @@ int add_horses(int x)
             my_mvaddstr(y-1, x+38, "NEIGH!  ");
         else
             my_mvaddstr(y-1, x+38, "        ");
+    }
+    return OK;
+}
+
+int add_biplane(int x)
+{
+    extern config conf;
+    // 2 stages of the biplane, 9 lines high
+    static char *biplane[BIPLANEPATTERNS][BIPLANEHEIGHT+1]
+        = {
+            {BIPLANE11, BIPLANE12, BIPLANE13, BIPLANE14, BIPLANE15, BIPLANE16, BIPLANE17, BIPLANE18, BIPLANE19},
+            {BIPLANE21, BIPLANE22, BIPLANE23, BIPLANE24, BIPLANE25, BIPLANE26, BIPLANE27, BIPLANE28, BIPLANE29},
+        };
+
+    int y, i;
+
+    if (x < - BIPLANELENGTH)  return ERR;
+
+    // calculates vertical positioning
+    y = LINES / 2 - (BIPLANEHEIGHT/2);
+
+    if (conf.fly == 1) {
+        y = (x / 7) + LINES - (COLS / 7) - BIPLANEHEIGHT;
+    }
+    // print horses, 1 line at a time
+    for (i = 0; i < BIPLANEHEIGHT; ++i) {
+        my_mvaddstr(y + i,           x,      biplane[(BIPLANELENGTH + x)     % BIPLANEPATTERNS][i]);
+    }
+    // if accident, print guys
+    if (conf.accident == 1) {
+        if (x % 20 < 10)
+            my_mvaddstr(y+8, x,  "MAYDAY        ");
+        else
+            my_mvaddstr(y+8, x,  "              ");
+        add_smoke(y-2, x);
+    } else {
+        if (x % 8 < 4)
+            my_mvaddstr(y+7, x,  "TICKA       ");
+        else
+            my_mvaddstr(y+7, x,  "    TACKA   ");
     }
     return OK;
 }
