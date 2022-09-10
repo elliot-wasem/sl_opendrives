@@ -124,8 +124,7 @@ int main(int argc, char *argv[])
     option(argc, argv);
 
     initscr();
-    // TODO: uncomment line below
-    // signal(SIGINT, SIG_IGN);
+    signal(SIGINT, SIG_IGN);
 
     // don't echo typed characters to screen
     noecho();
