@@ -8,11 +8,21 @@
 
 CC=gcc
 CFLAGS=-O -Wall
+INSTALLDIR=$(DESTDIR)/usr/bin
 
 all: sl
 
 sl: sl.c sl.h
 	$(CC) $(CFLAGS) -o sl sl.c -lncurses
+
+install: sl
+	cp sl $(INSTALLDIR)
+
+uninstall: sl
+	rm $(INSTALLDIR)/sl
+
+deb: sl
+	debuild -us -uc -b
 
 clean:
 	rm -f sl

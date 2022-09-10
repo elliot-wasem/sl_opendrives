@@ -1,0 +1,13 @@
+Package: sl-dbgsym
+Package-Type: ddeb
+Source: sl
+Version: 6.0-1
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Elliot Wasem <elliotbielwasem@gmail.com>
+Installed-Size: 18
+Depends: sl (= 6.0-1)
+Section: debug
+Priority: optional
+Description: debug symbols for sl
+Build-Ids: 09db17e660a99c163e94d3795884d3519b6c1f10
