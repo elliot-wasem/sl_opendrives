@@ -50,11 +50,12 @@ void add_man(int y, int x);
 int add_C51(int x);
 int add_D51(int x);
 int add_sl(int x);
+int add_horses(int x);
 void option(int argc, char *argv[]);
 int isnumber(char *n);
 int my_mvaddstr(int y, int x, char *str);
 
-config conf = {.accident = 0, .selection = -1, .logo = 0, .fly = 0, .c51 = 0};
+config conf = {.accident = 0, .selection = ERR, .logo = 0, .fly = 0, .c51 = 0};
 
 /**
  * Adds a string safely to the screen buffer.
@@ -92,6 +93,9 @@ int isnumber(char *n) {
     return OK;
 }
 
+/**
+ * Collects options from argv idiomatically using getopt
+ */
 void option(int argc, char *argv[])
 {
     extern config conf;
@@ -103,25 +107,12 @@ void option(int argc, char *argv[])
             case 'l': conf.logo      = 1; break;
             case 'c': conf.c51       = 1; break;
             case 'n': 
-                if (isnumber(optarg)) {
+                if (isnumber(optarg) == OK) {
                     conf.selection = atoi(optarg);
                 }
                 break;
         }
     }
-    //while (*str != '\0') {
-    //    switch (*str++) {
-    //        // accident, print 'helps'
-    //        case 'a': ACCIDENT = 1; break;
-    //        // locomotive flies
-    //        case 'F': FLY      = 1; break;
-    //        // little train!
-    //        case 'l': LOGO     = 1; break;
-    //        // select C51 train
-    //        case 'c': C51      = 1; break;
-    //        default:                break;
-    //    }
-    //}
 }
 
 int main(int argc, char *argv[])
@@ -147,6 +138,8 @@ int main(int argc, char *argv[])
     // disables scrolling even if the cursor goes off the bottom of the screen
     scrollok(stdscr, FALSE);
 
+    int print_selection_error = 0;
+
     // draws selected train across screen
     for (x = COLS - 1; ; --x) {
         if (conf.logo == 1) {
@@ -154,6 +147,30 @@ int main(int argc, char *argv[])
         }
         else if (conf.c51 == 1) {
             if (add_C51(x) == ERR) break;
+        }
+        else if (conf.selection != ERR) {
+            int error_occurred = 0;
+            switch (conf.selection) {
+                case 0:
+                    if (add_sl(x) == ERR) error_occurred = 1;
+                    break;
+                case 1:
+                    if (add_C51(x) == ERR) error_occurred = 1;
+                    break;
+                case 2:
+                    if (add_D51(x) == ERR) error_occurred = 1;
+                    break;
+                case 3:
+                    if (add_horses(x) == ERR) error_occurred = 1;
+                    break;
+                default:
+                    print_selection_error = 1;
+                    error_occurred = 1;
+                    break;
+            }
+            if (error_occurred) {
+                break;
+            }
         }
         else {
             if (add_D51(x) == ERR) break;
@@ -164,6 +181,10 @@ int main(int argc, char *argv[])
     }
     mvcur(0, COLS - 1, LINES - 1, 0);
     endwin();
+
+    if (print_selection_error) {
+        fprintf(stderr, "ERROR: Locomotive selection '%d' is invalid\n", conf.selection);
+    }
 
     return 0;
 }
@@ -370,4 +391,40 @@ void add_smoke(int y, int x)
         S[sum].ptrn = 0; S[sum].kind = sum % 2;
         sum ++;
     }
+}
+
+int add_horses(int x)
+{
+    extern config conf;
+    // 3 stages of the horses, 6 lines high
+    static char *horses[HORSESPATTERNS][HORSESHEIGHT+1]
+        = {
+            {HORSES11, HORSES12, HORSES13, HORSES14, HORSES15, HORSES16},
+            {HORSES21, HORSES22, HORSES23, HORSES24, HORSES25, HORSES26},
+            {HORSES31, HORSES32, HORSES33, HORSES34, HORSES35, HORSES36},
+        };
+
+    int y, i, dy = 0;
+
+    if (x < - HORSESLENGTH)  return ERR;
+
+    // calculates vertical positioning
+    y = LINES / 2 - (HORSESHEIGHT/2);
+
+    if (conf.fly == 1) {
+        y = (x / 7) + LINES - (COLS / 7) - HORSESHEIGHT;
+        dy = 2;
+    }
+    // print locomotive and coal car 1 line at a time
+    for (i = 0; i < HORSESHEIGHT; ++i) {
+        my_mvaddstr(y + i,           x,      horses[(HORSESLENGTH + x)     % HORSESPATTERNS][i]);
+        my_mvaddstr(y + i + dy,      x + 18, horses[(HORSESLENGTH + x + 1) % HORSESPATTERNS][i]);
+        my_mvaddstr(y + i + dy + dy, x + 36, horses[(HORSESLENGTH + x + 2) % HORSESPATTERNS][i]);
+    }
+    // if accident, print guys
+    if (conf.accident == 1) {
+        //add_man(y + 2, x + 43);
+        //add_man(y + 2, x + 47);
+    }
+    return OK;
 }

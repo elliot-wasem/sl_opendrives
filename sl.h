@@ -149,6 +149,31 @@
 #define C51WH13 "/~\\____|___|/~\\_|  O=======O=======O   |__|+-/~\\_|     "
 #define C51WH14 "\\_/         \\_/  \\____/  \\____/  \\____/      \\_/       "
 
+#define HORSESHEIGHT 6
+#define HORSESLENGTH 53 
+#define HORSESPATTERNS 3
+
+#define HORSES11 "  \\                "
+#define HORSES12 " ####              "
+#define HORSES13 "## #########=\\     "
+#define HORSES14 "    ######## \\\\    "
+#define HORSES15 "    /|     |\\ \\\\   "
+#define HORSES16 "   / |     | \\ \\\\  "
+
+#define HORSES21 "  \\               "
+#define HORSES22 " ####             "
+#define HORSES23 "## #########=\\    "
+#define HORSES24 "    ######## \\\\   "
+#define HORSES25 "    /|    /\\ \\\\   "
+#define HORSES26 "    | \\  /  \\ \\\\  "
+
+#define HORSES31 "  \\                "
+#define HORSES32 " ####              "
+#define HORSES33 "## #########=\\     "
+#define HORSES34 "    ######## \\\\    "
+#define HORSES35 "    |\\     /| \\\\   "
+#define HORSES36 "    | \\   / |  \\\\  "
+
 typedef struct {
     int accident;
     int selection;
