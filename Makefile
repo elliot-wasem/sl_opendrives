@@ -9,6 +9,7 @@
 CC=gcc
 CFLAGS=-O -Wall
 INSTALLDIR=$(DESTDIR)/usr/bin
+MANDIR=$(DESTDIR)/usr/share/man/man1
 
 all: sl
 
@@ -17,9 +18,12 @@ sl: sl.c sl.h
 
 install: sl
 	cp sl $(INSTALLDIR)
+	mkdir -p $(MANDIR)
+	gzip -c sl.man > $(MANDIR)/sl.1.gz
 
 uninstall: sl
 	rm $(INSTALLDIR)/sl
+	rm $(MANDIR)/sl.1.gz
 
 deb: sl
 	debuild -us -uc -b
